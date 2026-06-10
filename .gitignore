@@ -1,0 +1,5 @@
+# Generated release artifacts (rebuild with scripts/build-release.sh)
+/dist/
+
+# Local Claude Code settings
+/.claude/

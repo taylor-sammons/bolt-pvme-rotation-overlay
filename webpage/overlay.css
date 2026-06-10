@@ -1,0 +1,123 @@
+/* Transparent page so only the overlay panel shows over the game. */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #f2f2f2;
+  user-select: none;
+}
+
+#overlay {
+  box-sizing: border-box;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(12, 12, 16, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 4px 8px 8px 8px;
+  backdrop-filter: blur(2px);
+}
+
+#bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+#title {
+  flex: 1;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #ffd57a;
+}
+
+.navbtn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f2f2f2;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 8px;
+  min-width: 24px;
+}
+.navbtn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+.navbtn:active {
+  background: rgba(255, 255, 255, 0.34);
+}
+.navbtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.gear {
+  font-size: 14px;
+}
+
+#strip {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  align-items: center;
+  gap: 2px 4px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+/* Token styling (shared classes emitted by pvme-parse.js). */
+.pvme-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 4px;
+  width: 100%;
+}
+.pvme-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+}
+.pvme-icon {
+  display: block;
+  image-rendering: -webkit-optimize-contrast;
+}
+.pvme-arrow {
+  color: #8fb7ff;
+  font-weight: 700;
+  padding: 0 1px;
+}
+.pvme-plus {
+  color: #ff9f6b;
+  font-weight: 700;
+  padding: 0 1px;
+}
+.pvme-note {
+  font-style: italic;
+  color: #b9c4d0;
+  font-size: 12px;
+}
+.pvme-text {
+  color: #e8e8e8;
+  font-size: 13px;
+}
+.pvme-fallback {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+#empty {
+  color: #b9c4d0;
+  font-size: 12px;
+  font-style: italic;
+}

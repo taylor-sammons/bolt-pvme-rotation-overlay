@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>PvME Rotation Overlay — Settings</title>
+    <link rel="stylesheet" href="config.css" />
+  </head>
+  <body>
+    <header>
+      <h1>PvME Rotation Overlay</h1>
+      <p class="sub">
+        Split a rotation into phases. For each phase, paste the text from PvME's
+        <em>Copy Discord</em> button. Use the overlay's ◀ / ▶ buttons (or arrow keys
+        while it's focused) to move between phases in-game.
+      </p>
+    </header>
+
+    <section id="phases-section">
+      <div class="section-head">
+        <h2>Phases</h2>
+        <button id="add-phase" class="btn">+ Add phase</button>
+      </div>
+      <div id="phases"></div>
+    </section>
+
+    <section id="overlay-section">
+      <h2>Overlay position &amp; size</h2>
+      <div class="grid">
+        <label>X <input type="number" id="ov-x" /></label>
+        <label>Y <input type="number" id="ov-y" /></label>
+        <label>Width <input type="number" id="ov-w" /></label>
+        <label>Height <input type="number" id="ov-h" /></label>
+        <label>Icon size <input type="number" id="ov-icon" min="12" max="128" /></label>
+        <label class="check"><input type="checkbox" id="ov-visible" /> Show overlay</label>
+      </div>
+      <p class="hint">
+        Position/size are in pixels from the top-left of the game window. Changing them
+        recreates the overlay when you save.
+      </p>
+    </section>
+
+    <footer>
+      <button id="save" class="btn primary">Save</button>
+      <button id="close" class="btn">Close</button>
+      <span id="status"></span>
+    </footer>
+
+    <script src="pvme-parse.js"></script>
+    <script src="config.js"></script>
+  </body>
+</html>

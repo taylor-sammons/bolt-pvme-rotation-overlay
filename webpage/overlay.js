@@ -4,19 +4,20 @@
 (function () {
   "use strict";
 
-  let config = { overlay: { iconSize: 44 }, currentPhase: 0, phases: [] };
+  let config = { overlay: { iconSize: 20 }, currentPhase: 0, phases: [] };
 
   const titleEl = document.getElementById("title");
   const stripEl = document.getElementById("strip");
   const prevBtn = document.getElementById("prev");
   const nextBtn = document.getElementById("next");
   const gearBtn = document.getElementById("gear");
+  const resizeEl = document.getElementById("resize");
 
   // --- Bridge: JS -> Lua via POST to https://bolt-api/. Silently no-ops when
   // running standalone in a normal browser (the host won't exist). ---
   function postToLua(obj) {
     try {
-      fetch("https://bolt-api/rotation", {
+      fetch("https://bolt-api/send-message", {
         method: "POST",
         body: JSON.stringify(obj),
       }).catch(function () {});
@@ -42,8 +43,10 @@
 
   function applyConfig(cfg) {
     config = cfg;
-    if (!config.overlay) config.overlay = { iconSize: 44 };
+    if (!config.overlay) config.overlay = { iconSize: 20 };
     if (!Array.isArray(config.phases)) config.phases = [];
+    // When locked, the title cursor and resize grip are hidden via CSS.
+    document.body.classList.toggle("locked", !!config.overlay.locked);
     clampPhase();
     render();
   }
@@ -89,7 +92,7 @@
     prevBtn.disabled = i <= 0;
     nextBtn.disabled = i >= n - 1;
 
-    const iconSize = (config.overlay && config.overlay.iconSize) || 44;
+    const iconSize = (config.overlay && config.overlay.iconSize) || 20;
     const parsed = PvME.parsePhase(phase.text || "");
     if (parsed.length === 0) {
       const hint = document.createElement("span");
@@ -112,6 +115,25 @@
     postToLua({ type: "openConfig" });
   });
 
+  // Drag-to-move: pressing the title bar asks Lua to begin a window reposition.
+  // Bolt then handles the drag internally and reports the new position via
+  // onreposition. The ◀/▶/⚙ buttons are separate elements, so they still click.
+  titleEl.addEventListener("mousedown", function (e) {
+    if (e.button !== 0 || isLocked()) return;
+    postToLua({ type: "startdrag" });
+  });
+
+  // Resize: pressing the corner grip asks Lua to begin a bottom-right resize.
+  resizeEl.addEventListener("mousedown", function (e) {
+    if (e.button !== 0 || isLocked()) return;
+    e.preventDefault();
+    postToLua({ type: "startresize" });
+  });
+
+  function isLocked() {
+    return !!(config.overlay && config.overlay.locked);
+  }
+
   // Arrow keys work while the overlay has focus. (Bolt exposes no Lua keyboard
   // hook, so this is best-effort; the ◀/▶ buttons are the reliable path.)
   window.addEventListener("keydown", function (e) {
@@ -128,7 +150,7 @@
   function maybeMock() {
     if (!/[?&]mock=1\b/.test(location.search)) return;
     applyConfig({
-      overlay: { iconSize: 44 },
+      overlay: { iconSize: 20 },
       currentPhase: 0,
       phases: [
         {

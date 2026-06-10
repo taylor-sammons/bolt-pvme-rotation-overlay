@@ -29,7 +29,7 @@ local CONFIG_FILE = "rotation.json"
 
 local function default_config()
 	return {
-		overlay = { x = 40, y = 40, w = 640, h = 110, iconSize = 44, visible = true },
+		overlay = { x = 40, y = 40, w = 640, h = 110, iconSize = 20, visible = true, locked = false },
 		currentPhase = 0,
 		phases = {},
 	}
@@ -111,7 +111,22 @@ local function create_overlay()
 			save_config()
 		elseif data.type == "openConfig" then
 			open_config_window()
+		elseif data.type == "startdrag" then
+			-- Begin an interactive move (both axes 0 = move, not resize).
+			overlay:startreposition(0, 0)
+		elseif data.type == "startresize" then
+			-- Begin an interactive resize from the bottom-right corner.
+			overlay:startreposition(1, 1)
 		end
+	end)
+	-- When the user finishes dragging, persist the new position.
+	overlay:onreposition(function(event)
+		local x, y, w, h = event:xywh()
+		config.overlay.x = x
+		config.overlay.y = y
+		config.overlay.w = w
+		config.overlay.h = h
+		save_config()
 	end)
 end
 

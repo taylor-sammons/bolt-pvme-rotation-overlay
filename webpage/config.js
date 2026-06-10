@@ -6,7 +6,7 @@
   const PREVIEW_ICON = 28;
 
   let state = {
-    overlay: { x: 40, y: 40, w: 640, h: 110, iconSize: 44, visible: true },
+    overlay: { x: 40, y: 40, w: 640, h: 110, iconSize: 20, visible: true },
     currentPhase: 0,
     phases: [],
   };
@@ -20,12 +20,13 @@
     h: document.getElementById("ov-h"),
     icon: document.getElementById("ov-icon"),
     visible: document.getElementById("ov-visible"),
+    locked: document.getElementById("ov-locked"),
   };
 
   // --- Bridge ---
   function postToLua(obj) {
     try {
-      fetch("https://bolt-api/rotation", {
+      fetch("https://bolt-api/send-message", {
         method: "POST",
         body: JSON.stringify(obj),
       }).catch(function () {});
@@ -56,8 +57,9 @@
     fields.y.value = state.overlay.y ?? 40;
     fields.w.value = state.overlay.w ?? 640;
     fields.h.value = state.overlay.h ?? 110;
-    fields.icon.value = state.overlay.iconSize ?? 44;
+    fields.icon.value = state.overlay.iconSize ?? 20;
     fields.visible.checked = state.overlay.visible !== false;
+    fields.locked.checked = !!state.overlay.locked;
     renderPhases();
   }
 
@@ -165,8 +167,9 @@
       y: num(fields.y, 40),
       w: num(fields.w, 640),
       h: num(fields.h, 110),
-      iconSize: Math.max(12, Math.min(128, num(fields.icon, 44))),
+      iconSize: Math.max(12, Math.min(128, num(fields.icon, 20))),
       visible: fields.visible.checked,
+      locked: fields.locked.checked,
     };
     if (state.currentPhase >= state.phases.length) {
       state.currentPhase = Math.max(0, state.phases.length - 1);
@@ -195,7 +198,7 @@
   function maybeMock() {
     if (!/[?&]mock=1\b/.test(location.search)) return;
     loadState({
-      overlay: { x: 40, y: 40, w: 640, h: 110, iconSize: 44, visible: true },
+      overlay: { x: 40, y: 40, w: 640, h: 110, iconSize: 20, visible: true },
       currentPhase: 0,
       phases: [
         {

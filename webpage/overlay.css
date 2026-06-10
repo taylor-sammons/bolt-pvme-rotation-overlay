@@ -11,6 +11,7 @@ body {
 }
 
 #overlay {
+  position: relative;
   box-sizing: border-box;
   width: 100vw;
   height: 100vh;
@@ -38,6 +39,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   color: #ffd57a;
+  cursor: move;
 }
 
 .navbtn {
@@ -72,7 +74,8 @@ body {
   align-items: center;
   gap: 2px 4px;
   margin-top: 6px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Token styling (shared classes emitted by pvme-parse.js). */
@@ -120,4 +123,31 @@ body {
   color: #b9c4d0;
   font-size: 12px;
   font-style: italic;
+}
+
+/* Bottom-right resize grip. */
+#resize {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  opacity: 0.6;
+  background: repeating-linear-gradient(
+    135deg,
+    transparent 0 3px,
+    rgba(255, 255, 255, 0.6) 3px 4px
+  );
+}
+#resize:hover {
+  opacity: 1;
+}
+
+/* Locked: no move cursor, no resize grip. */
+body.locked #title {
+  cursor: default;
+}
+body.locked #resize {
+  display: none;
 }

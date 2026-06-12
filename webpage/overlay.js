@@ -9,6 +9,7 @@
 
   const titleEl = document.getElementById("title");
   const stripEl = document.getElementById("strip");
+  const resetBtn = document.getElementById("reset");
   const prevBtn = document.getElementById("prev");
   const nextBtn = document.getElementById("next");
   const gearBtn = document.getElementById("gear");
@@ -105,6 +106,7 @@
       hint.id = "empty";
       hint.textContent = "Click ⚙ to paste a PvME rotation.";
       stripEl.appendChild(hint);
+      resetBtn.disabled = true;
       prevBtn.disabled = true;
       nextBtn.disabled = true;
       return;
@@ -121,6 +123,7 @@
       hint.id = "empty";
       hint.textContent = "(no phases in this profile)";
       stripEl.appendChild(hint);
+      resetBtn.disabled = true;
       prevBtn.disabled = true;
       nextBtn.disabled = true;
       return;
@@ -129,6 +132,7 @@
     const phase = phases[i] || {};
     titleEl.textContent =
       "Phase " + (i + 1) + "/" + n + (phase.name ? " — " + phase.name : "");
+    resetBtn.disabled = i <= 0;
     prevBtn.disabled = i <= 0;
     nextBtn.disabled = i >= n - 1;
 
@@ -147,6 +151,9 @@
   // --- Input ---
   profileSel.addEventListener("change", function () {
     setProfile(profileSel.selectedIndex);
+  });
+  resetBtn.addEventListener("click", function () {
+    setPhase(0);
   });
   prevBtn.addEventListener("click", function () {
     const p = activeProfile();

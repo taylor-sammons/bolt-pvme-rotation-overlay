@@ -30,12 +30,14 @@ local CONFIG_FILE = "rotation.json"
 local function default_config()
 	return {
 		overlay = { x = 40, y = 40, w = 640, h = 110, iconSize = 20, visible = true, locked = false },
-		currentPhase = 0,
-		phases = {},
+		currentProfile = 0,
+		profiles = {},
 	}
 end
 
 -- Merge loaded values over defaults so missing keys never crash the UI.
+-- Also migrates the v1 shape (top-level phases/currentPhase) into a single
+-- profile so configs saved by 0.1.x keep working.
 local function normalize(cfg)
 	local d = default_config()
 	if type(cfg) ~= "table" then
@@ -47,16 +49,54 @@ local function normalize(cfg)
 			cfg.overlay[k] = v
 		end
 	end
-	if type(cfg.phases) ~= "table" then
-		cfg.phases = {}
+	if type(cfg.profiles) ~= "table" then
+		if type(cfg.phases) == "table" and #cfg.phases > 0 then
+			cfg.profiles = {
+				{
+					name = "Default",
+					currentPhase = type(cfg.currentPhase) == "number" and cfg.currentPhase or 0,
+					phases = cfg.phases,
+				},
+			}
+		else
+			cfg.profiles = {}
+		end
 	end
-	if type(cfg.currentPhase) ~= "number" then
-		cfg.currentPhase = 0
+	cfg.phases = nil
+	cfg.currentPhase = nil
+	local profiles = {}
+	for _, p in ipairs(cfg.profiles) do
+		if type(p) == "table" then
+			if type(p.name) ~= "string" then
+				p.name = "Unnamed"
+			end
+			if type(p.phases) ~= "table" then
+				p.phases = {}
+			end
+			if type(p.currentPhase) ~= "number" then
+				p.currentPhase = 0
+			end
+			profiles[#profiles + 1] = p
+		end
+	end
+	cfg.profiles = profiles
+	-- currentProfile/currentPhase are 0-based (JS indexes); clamp into range.
+	if type(cfg.currentProfile) ~= "number" then
+		cfg.currentProfile = 0
+	end
+	if cfg.currentProfile >= #cfg.profiles then
+		cfg.currentProfile = math.max(0, #cfg.profiles - 1)
+	elseif cfg.currentProfile < 0 then
+		cfg.currentProfile = 0
 	end
 	return cfg
 end
 
 local config = default_config()
+
+local function active_profile()
+	return config.profiles[(config.currentProfile or 0) + 1]
+end
 
 local function load_config()
 	local ok, contents = pcall(bolt.loadconfig, CONFIG_FILE)
@@ -107,7 +147,13 @@ local function create_overlay()
 		if data.type == "ready" then
 			send_data_to(overlay)
 		elseif data.type == "setPhase" then
-			config.currentPhase = data.index or 0
+			local p = active_profile()
+			if p ~= nil then
+				p.currentPhase = data.index or 0
+				save_config()
+			end
+		elseif data.type == "setProfile" then
+			config.currentProfile = data.index or 0
 			save_config()
 		elseif data.type == "openConfig" then
 			open_config_window()
@@ -176,7 +222,7 @@ end
 load_config()
 create_overlay()
 
--- First run with no phases yet: pop the config window so the user can paste a rotation.
-if #config.phases == 0 then
+-- First run with no rotation yet: pop the config window so the user can paste one.
+if #config.profiles == 0 then
 	open_config_window()
 end

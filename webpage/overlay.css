@@ -42,6 +42,21 @@ body {
   cursor: move;
 }
 
+#profile {
+  max-width: 140px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f2f2f2;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  font-size: 12px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+#profile option {
+  background: #1a1c22;
+  color: #f2f2f2;
+}
+
 .navbtn {
   background: rgba(255, 255, 255, 0.1);
   color: #f2f2f2;

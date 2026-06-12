@@ -9,11 +9,31 @@
     <header>
       <h1>PvME Rotation Overlay</h1>
       <p class="sub">
-        Split a rotation into phases. For each phase, paste the text from PvME's
-        <em>Copy Discord</em> button. Use the overlay's ◀ / ▶ buttons (or arrow keys
-        while it's focused) to move between phases in-game.
+        Each <em>profile</em> is one rotation (e.g. a boss/style), split into phases.
+        For each phase, paste the text from PvME's <em>Copy Discord</em> button.
+        In-game, switch profiles with the overlay's dropdown and move between phases
+        with its ◀ / ▶ buttons (or arrow keys while it's focused).
       </p>
     </header>
+
+    <section id="profiles-section">
+      <div class="section-head">
+        <h2>Rotation profiles</h2>
+        <div class="profile-actions">
+          <button id="add-profile" class="btn">+ New profile</button>
+          <button id="dup-profile" class="btn">Duplicate</button>
+          <button id="del-profile" class="btn">Delete</button>
+        </div>
+      </div>
+      <div class="profile-row">
+        <select id="profile-select"></select>
+        <input
+          type="text"
+          id="profile-name"
+          placeholder="Profile name (e.g. Rasial — Mage)"
+        />
+      </div>
+    </section>
 
     <section id="phases-section">
       <div class="section-head">

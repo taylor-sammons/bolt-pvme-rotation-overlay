@@ -1,10 +1,11 @@
-// Overlay logic: receive config from Lua, render the current phase as an icon
-// strip, and navigate phases via the on-screen buttons or arrow keys.
+// Overlay logic: receive config from Lua, render the current phase of the
+// active profile as an icon strip, and navigate phases via the on-screen
+// buttons or arrow keys. The dropdown switches between rotation profiles.
 
 (function () {
   "use strict";
 
-  let config = { overlay: { iconSize: 20 }, currentPhase: 0, phases: [] };
+  let config = { overlay: { iconSize: 20 }, currentProfile: 0, profiles: [] };
 
   const titleEl = document.getElementById("title");
   const stripEl = document.getElementById("strip");
@@ -12,6 +13,7 @@
   const nextBtn = document.getElementById("next");
   const gearBtn = document.getElementById("gear");
   const resizeEl = document.getElementById("resize");
+  const profileSel = document.getElementById("profile");
 
   // --- Bridge: JS -> Lua via POST to https://bolt-api/. Silently no-ops when
   // running standalone in a normal browser (the host won't exist). ---
@@ -44,38 +46,60 @@
   function applyConfig(cfg) {
     config = cfg;
     if (!config.overlay) config.overlay = { iconSize: 20 };
-    if (!Array.isArray(config.phases)) config.phases = [];
+    if (!Array.isArray(config.profiles)) config.profiles = [];
+    config.currentProfile = clampIndex(config.currentProfile, config.profiles.length);
     // When locked, the title cursor and resize grip are hidden via CSS.
     document.body.classList.toggle("locked", !!config.overlay.locked);
-    clampPhase();
     render();
   }
 
-  function clampPhase() {
-    const n = config.phases.length;
-    if (n === 0) {
-      config.currentPhase = 0;
-    } else {
-      config.currentPhase = Math.max(0, Math.min(config.currentPhase | 0, n - 1));
-    }
+  function clampIndex(i, n) {
+    if (n === 0) return 0;
+    return Math.max(0, Math.min(i | 0, n - 1));
+  }
+
+  function activeProfile() {
+    return config.profiles[config.currentProfile] || null;
+  }
+
+  function setProfile(index) {
+    const next = clampIndex(index, config.profiles.length);
+    if (next === config.currentProfile) return;
+    config.currentProfile = next;
+    render();
+    postToLua({ type: "setProfile", index: next });
   }
 
   function setPhase(index) {
-    const n = config.phases.length;
-    if (n === 0) return;
-    const next = Math.max(0, Math.min(index, n - 1));
-    if (next === config.currentPhase) return;
-    config.currentPhase = next;
+    const profile = activeProfile();
+    if (!profile || profile.phases.length === 0) return;
+    const next = clampIndex(index, profile.phases.length);
+    if (next === profile.currentPhase) return;
+    profile.currentPhase = next;
     render();
     postToLua({ type: "setPhase", index: next });
   }
 
+  function renderProfileSelect() {
+    const profiles = config.profiles;
+    // Only worth showing when there's actually a choice to make.
+    profileSel.style.display = profiles.length > 1 ? "" : "none";
+    profileSel.innerHTML = "";
+    profiles.forEach(function (p, i) {
+      const opt = document.createElement("option");
+      opt.value = String(i);
+      opt.textContent = p.name || "Profile " + (i + 1);
+      profileSel.appendChild(opt);
+    });
+    profileSel.selectedIndex = config.currentProfile;
+  }
+
   function render() {
-    const n = config.phases.length;
-    const i = config.currentPhase;
+    renderProfileSelect();
     stripEl.innerHTML = "";
 
-    if (n === 0) {
+    const profile = activeProfile();
+    if (!profile) {
       titleEl.textContent = "No rotation loaded";
       const hint = document.createElement("span");
       hint.id = "empty";
@@ -86,7 +110,23 @@
       return;
     }
 
-    const phase = config.phases[i] || {};
+    const phases = Array.isArray(profile.phases) ? profile.phases : [];
+    profile.currentPhase = clampIndex(profile.currentPhase, phases.length);
+    const n = phases.length;
+    const i = profile.currentPhase;
+
+    if (n === 0) {
+      titleEl.textContent = profile.name || "Unnamed";
+      const hint = document.createElement("span");
+      hint.id = "empty";
+      hint.textContent = "(no phases in this profile)";
+      stripEl.appendChild(hint);
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+      return;
+    }
+
+    const phase = phases[i] || {};
     titleEl.textContent =
       "Phase " + (i + 1) + "/" + n + (phase.name ? " — " + phase.name : "");
     prevBtn.disabled = i <= 0;
@@ -105,11 +145,16 @@
   }
 
   // --- Input ---
+  profileSel.addEventListener("change", function () {
+    setProfile(profileSel.selectedIndex);
+  });
   prevBtn.addEventListener("click", function () {
-    setPhase(config.currentPhase - 1);
+    const p = activeProfile();
+    if (p) setPhase(p.currentPhase - 1);
   });
   nextBtn.addEventListener("click", function () {
-    setPhase(config.currentPhase + 1);
+    const p = activeProfile();
+    if (p) setPhase(p.currentPhase + 1);
   });
   gearBtn.addEventListener("click", function () {
     postToLua({ type: "openConfig" });
@@ -137,11 +182,13 @@
   // Arrow keys work while the overlay has focus. (Bolt exposes no Lua keyboard
   // hook, so this is best-effort; the ◀/▶ buttons are the reliable path.)
   window.addEventListener("keydown", function (e) {
+    const p = activeProfile();
+    if (!p) return;
     if (e.key === "ArrowLeft") {
-      setPhase(config.currentPhase - 1);
+      setPhase(p.currentPhase - 1);
       e.preventDefault();
     } else if (e.key === "ArrowRight") {
-      setPhase(config.currentPhase + 1);
+      setPhase(p.currentPhase + 1);
       e.preventDefault();
     }
   });
@@ -151,17 +198,34 @@
     if (!/[?&]mock=1\b/.test(location.search)) return;
     applyConfig({
       overlay: { iconSize: 20 },
-      currentPhase: 0,
-      phases: [
+      currentProfile: 0,
+      profiles: [
         {
-          name: "Pre Living Death",
-          text:
-            "(tc) → <:deathskulls:1159434663903899728> → <:soulsap:1137809140476031057> → <:touchofdeath:1137809175980810380> *2t*",
+          name: "Rasial — Mage",
+          currentPhase: 0,
+          phases: [
+            {
+              name: "Pre Living Death",
+              text:
+                "(tc) → <:deathskulls:1159434663903899728> → <:soulsap:1137809140476031057> → <:touchofdeath:1137809175980810380> *2t*",
+            },
+            {
+              name: "Equilibrium",
+              text:
+                "<:soulsap:1137809140476031057> + <:deathskulls:1159434663903899728> → <:touchofdeath:1137809175980810380>",
+            },
+          ],
         },
         {
-          name: "Equilibrium",
-          text:
-            "<:soulsap:1137809140476031057> + <:deathskulls:1159434663903899728> → <:touchofdeath:1137809175980810380>",
+          name: "Amascut — Range",
+          currentPhase: 0,
+          phases: [
+            {
+              name: "Opener",
+              text:
+                "<:deathskulls:1159434663903899728> → <:soulsap:1137809140476031057>",
+            },
+          ],
         },
       ],
     });

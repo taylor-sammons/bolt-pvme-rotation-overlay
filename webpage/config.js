@@ -1,4 +1,5 @@
-// Config window: edit phases + overlay geometry, preview live, save back to Lua.
+// Config window: manage rotation profiles, edit each profile's phases,
+// preview live, edit overlay geometry, and save back to Lua.
 
 (function () {
   "use strict";
@@ -7,12 +8,17 @@
 
   let state = {
     overlay: { x: 40, y: 40, w: 640, h: 110, iconSize: 20, visible: true },
-    currentPhase: 0,
-    phases: [],
+    currentProfile: 0,
+    profiles: [],
   };
 
   const phasesEl = document.getElementById("phases");
   const statusEl = document.getElementById("status");
+  const profileSel = document.getElementById("profile-select");
+  const profileName = document.getElementById("profile-name");
+  const addProfileBtn = document.getElementById("add-profile");
+  const dupProfileBtn = document.getElementById("dup-profile");
+  const delProfileBtn = document.getElementById("del-profile");
   const fields = {
     x: document.getElementById("ov-x"),
     y: document.getElementById("ov-y"),
@@ -52,7 +58,15 @@
   function loadState(cfg) {
     state = cfg;
     if (!state.overlay) state.overlay = {};
-    if (!Array.isArray(state.phases)) state.phases = [];
+    // Defensive v1 migration (Lua normally migrates before sending).
+    if (!Array.isArray(state.profiles)) {
+      state.profiles = Array.isArray(state.phases) && state.phases.length
+        ? [{ name: "Default", currentPhase: state.currentPhase | 0, phases: state.phases }]
+        : [];
+    }
+    delete state.phases;
+    delete state.currentPhase;
+    state.currentProfile = clampIndex(state.currentProfile, state.profiles.length);
     fields.x.value = state.overlay.x ?? 40;
     fields.y.value = state.overlay.y ?? 40;
     fields.w.value = state.overlay.w ?? 640;
@@ -60,25 +74,120 @@
     fields.icon.value = state.overlay.iconSize ?? 20;
     fields.visible.checked = state.overlay.visible !== false;
     fields.locked.checked = !!state.overlay.locked;
+    renderProfileBar();
     renderPhases();
   }
 
-  // --- Phase list rendering ---
+  function clampIndex(i, n) {
+    if (n === 0) return 0;
+    return Math.max(0, Math.min(i | 0, n - 1));
+  }
+
+  function currentProfile() {
+    return state.profiles[state.currentProfile] || null;
+  }
+
+  // Used when adding a phase with no profiles yet: phases need a home.
+  function ensureProfile() {
+    if (state.profiles.length === 0) {
+      state.profiles.push({ name: "Default", currentPhase: 0, phases: [] });
+      state.currentProfile = 0;
+      renderProfileBar();
+    }
+    return currentProfile();
+  }
+
+  // --- Profile bar ---
+  function renderProfileBar() {
+    profileSel.innerHTML = "";
+    state.profiles.forEach(function (p, i) {
+      const opt = document.createElement("option");
+      opt.value = String(i);
+      opt.textContent = p.name || "Profile " + (i + 1);
+      profileSel.appendChild(opt);
+    });
+    const has = state.profiles.length > 0;
+    profileSel.disabled = !has;
+    profileName.disabled = !has;
+    dupProfileBtn.disabled = !has;
+    delProfileBtn.disabled = !has;
+    if (has) {
+      profileSel.selectedIndex = state.currentProfile;
+      profileName.value = currentProfile().name || "";
+    } else {
+      profileName.value = "";
+    }
+  }
+
+  profileSel.addEventListener("change", function () {
+    state.currentProfile = clampIndex(profileSel.selectedIndex, state.profiles.length);
+    renderProfileBar();
+    renderPhases();
+  });
+
+  profileName.addEventListener("input", function () {
+    const p = currentProfile();
+    if (!p) return;
+    p.name = profileName.value;
+    const opt = profileSel.options[state.currentProfile];
+    if (opt) opt.textContent = p.name || "Profile " + (state.currentProfile + 1);
+  });
+
+  addProfileBtn.addEventListener("click", function () {
+    state.profiles.push({ name: "New profile", currentPhase: 0, phases: [] });
+    state.currentProfile = state.profiles.length - 1;
+    renderProfileBar();
+    renderPhases();
+    profileName.focus();
+    profileName.select();
+  });
+
+  dupProfileBtn.addEventListener("click", function () {
+    const p = currentProfile();
+    if (!p) return;
+    const copy = JSON.parse(JSON.stringify(p));
+    copy.name = (p.name || "Profile") + " (copy)";
+    state.profiles.splice(state.currentProfile + 1, 0, copy);
+    state.currentProfile += 1;
+    renderProfileBar();
+    renderPhases();
+  });
+
+  delProfileBtn.addEventListener("click", function () {
+    const p = currentProfile();
+    if (!p) return;
+    const label = p.name || "this profile";
+    if (!confirm('Delete "' + label + '" and all its phases?')) return;
+    state.profiles.splice(state.currentProfile, 1);
+    state.currentProfile = clampIndex(state.currentProfile, state.profiles.length);
+    renderProfileBar();
+    renderPhases();
+  });
+
+  // --- Phase list rendering (always the current profile's phases) ---
   function renderPhases() {
     phasesEl.innerHTML = "";
-    if (state.phases.length === 0) {
+    const p = currentProfile();
+    if (!p) {
+      const empty = document.createElement("p");
+      empty.className = "hint";
+      empty.textContent = 'No profiles yet. Click "+ New profile" to start.';
+      phasesEl.appendChild(empty);
+      return;
+    }
+    if (p.phases.length === 0) {
       const empty = document.createElement("p");
       empty.className = "hint";
       empty.textContent = 'No phases yet. Click "+ Add phase" to start.';
       phasesEl.appendChild(empty);
       return;
     }
-    state.phases.forEach(function (phase, i) {
-      phasesEl.appendChild(buildPhaseRow(phase, i));
+    p.phases.forEach(function (phase, i) {
+      phasesEl.appendChild(buildPhaseRow(p, phase, i));
     });
   }
 
-  function buildPhaseRow(phase, i) {
+  function buildPhaseRow(profile, phase, i) {
     const wrap = document.createElement("div");
     wrap.className = "phase";
 
@@ -95,21 +204,21 @@
     name.placeholder = "Phase name (e.g. Pre Living Death)";
     name.value = phase.name || "";
     name.addEventListener("input", function () {
-      state.phases[i].name = name.value;
+      profile.phases[i].name = name.value;
     });
 
     const up = mkBtn("↑", "Move up", function () {
       if (i > 0) {
-        swap(i, i - 1);
+        swap(profile, i, i - 1);
       }
     });
     const down = mkBtn("↓", "Move down", function () {
-      if (i < state.phases.length - 1) {
-        swap(i, i + 1);
+      if (i < profile.phases.length - 1) {
+        swap(profile, i, i + 1);
       }
     });
     const del = mkBtn("✕", "Delete phase", function () {
-      state.phases.splice(i, 1);
+      profile.phases.splice(i, 1);
       renderPhases();
     });
 
@@ -131,7 +240,7 @@
       preview.appendChild(PvME.renderPhase(PvME.parsePhase(ta.value), PREVIEW_ICON));
     }
     ta.addEventListener("input", function () {
-      state.phases[i].text = ta.value;
+      profile.phases[i].text = ta.value;
       refreshPreview();
     });
     refreshPreview();
@@ -149,10 +258,10 @@
     return b;
   }
 
-  function swap(a, b) {
-    const tmp = state.phases[a];
-    state.phases[a] = state.phases[b];
-    state.phases[b] = tmp;
+  function swap(profile, a, b) {
+    const tmp = profile.phases[a];
+    profile.phases[a] = profile.phases[b];
+    profile.phases[b] = tmp;
     renderPhases();
   }
 
@@ -171,14 +280,16 @@
       visible: fields.visible.checked,
       locked: fields.locked.checked,
     };
-    if (state.currentPhase >= state.phases.length) {
-      state.currentPhase = Math.max(0, state.phases.length - 1);
-    }
+    state.currentProfile = clampIndex(state.currentProfile, state.profiles.length);
+    state.profiles.forEach(function (p) {
+      p.currentPhase = clampIndex(p.currentPhase, p.phases.length);
+    });
     return state;
   }
 
   document.getElementById("add-phase").addEventListener("click", function () {
-    state.phases.push({ name: "", text: "" });
+    const p = ensureProfile();
+    p.phases.push({ name: "", text: "" });
     renderPhases();
   });
 
@@ -199,12 +310,23 @@
     if (!/[?&]mock=1\b/.test(location.search)) return;
     loadState({
       overlay: { x: 40, y: 40, w: 640, h: 110, iconSize: 20, visible: true },
-      currentPhase: 0,
-      phases: [
+      currentProfile: 0,
+      profiles: [
         {
-          name: "Pre Living Death",
-          text:
-            "(tc) → <:deathskulls:1159434663903899728> → <:soulsap:1137809140476031057> *2t*",
+          name: "Rasial — Mage",
+          currentPhase: 0,
+          phases: [
+            {
+              name: "Pre Living Death",
+              text:
+                "(tc) → <:deathskulls:1159434663903899728> → <:soulsap:1137809140476031057> *2t*",
+            },
+          ],
+        },
+        {
+          name: "Amascut — Range",
+          currentPhase: 0,
+          phases: [],
         },
       ],
     });
@@ -212,5 +334,6 @@
 
   postToLua({ type: "ready" });
   maybeMock();
+  renderProfileBar();
   renderPhases();
 })();

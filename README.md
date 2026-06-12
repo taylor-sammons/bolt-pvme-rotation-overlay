@@ -1,10 +1,11 @@
 # PvME Rotation Overlay (Bolt plugin for RS3)
 
-An overlay for the [Bolt Launcher](https://bolt.adamcake.com) that displays a
-[PvME](https://pvme.io) combat rotation on top of RuneScape 3. You split a rotation into
-**named phases**, paste the text from PvME's **Copy Discord** button into each phase, and
-step between phases in-game with the on-screen ◀ / ▶ buttons (or the arrow keys while the
-overlay is focused).
+An overlay for the [Bolt Launcher](https://bolt.adamcake.com) that displays
+[PvME](https://pvme.io) combat rotations on top of RuneScape 3. Rotations are organized
+into **profiles** (one per boss/style — e.g. "Rasial — Mage"), each split into **named
+phases**. Paste the text from PvME's **Copy Discord** button into each phase, switch
+profiles in-game with the overlay's dropdown, and step between phases with the on-screen
+◀ / ▶ buttons (or the arrow keys while the overlay is focused).
 
 Ability icons are the real PvME emoji art, loaded straight from Discord's public CDN using
 the emoji ids embedded in the pasted text — so anything PvME can show, this can show.
@@ -25,8 +26,8 @@ plugin/main.lua      Thin orchestrator: owns config, creates/positions the overl
 modules/json.lua     Vendored rxi/json.lua (MIT) for encode/decode.
 webpage/
   pvme-parse.js      Shared parser: PvME "Copy Discord" text -> tokens -> DOM.
-  overlay.html/.css/.js   The on-screen strip + phase navigation.
-  config.html/.css/.js    Settings window: edit phases, paste text, set position/size.
+  overlay.html/.css/.js   The on-screen strip + profile/phase navigation.
+  config.html/.css/.js    Settings window: manage profiles, edit phases, set position/size.
 ```
 
 Lua ⇄ browser bridge (per the Bolt API):
@@ -37,18 +38,27 @@ Lua ⇄ browser bridge (per the Bolt API):
   receives the body string in `browser:onmessage`.
 
 Every message is a JSON object tagged with a `type` field (`data`, `ready`, `save`,
-`setPhase`, `openConfig`, `close`).
+`setPhase`, `setProfile`, `openConfig`, `close`).
 
 Config is persisted by Lua via `bolt.saveconfig("rotation.json", ...)` /
 `bolt.loadconfig(...)`. The stored shape:
 
 ```json
 {
-  "overlay":  { "x": 40, "y": 40, "w": 640, "h": 110, "iconSize": 44, "visible": true },
-  "currentPhase": 0,
-  "phases": [ { "name": "Pre Living Death", "text": "(tc) → <:deathskulls:1159...> → ..." } ]
+  "overlay":  { "x": 40, "y": 40, "w": 640, "h": 110, "iconSize": 20, "visible": true, "locked": false },
+  "currentProfile": 0,
+  "profiles": [
+    {
+      "name": "Rasial — Mage",
+      "currentPhase": 0,
+      "phases": [ { "name": "Pre Living Death", "text": "(tc) → <:deathskulls:1159...> → ..." } ]
+    }
+  ]
 }
 ```
+
+Configs saved by 0.1.x (top-level `phases`/`currentPhase`) are migrated automatically
+into a single profile named "Default" on first load.
 
 The raw pasted text is stored per phase; the browser parses it at render time, so messy or
 unusual input never breaks the Lua side.
@@ -59,7 +69,7 @@ unusual input never breaks the Lua side.
 2. Open the plugin menu under the **Play** button → **manage plugins**.
 3. Install this plugin — either point it at a local copy of this folder, or install from a
    release URL if you've packaged one.
-4. Launch RS3. On first run (no phases yet) the settings window opens automatically.
+4. Launch RS3. On first run (no rotation yet) the settings window opens automatically.
 
 ## Releasing
 
@@ -79,12 +89,15 @@ is intentionally **not** inside the tarball, since it contains the tarball's own
 
 ## Usage
 
-1. In the settings window, click **+ Add phase**, give it a name, and paste a chunk of a
-   PvME rotation using the **Copy Discord** button on a PvME guide/rotation. Each phase
-   shows a live preview as you type.
-2. Add as many phases as you want and reorder them with ↑ / ↓.
+1. In the settings window, click **+ New profile** and name it after the rotation
+   (e.g. `Rasial — Mage`). Use **Duplicate** / **Delete** to manage profiles; the
+   dropdown picks which profile you're editing.
+2. Click **+ Add phase**, give it a name, and paste a chunk of a PvME rotation using the
+   **Copy Discord** button on a PvME guide/rotation. Each phase shows a live preview as
+   you type. Add as many phases as you want and reorder them with ↑ / ↓.
 3. Set the overlay **position / size / icon size** and click **Save**.
-4. In-game, use the overlay's **◀ / ▶** buttons to move between phases. The header shows
+4. In-game, pick a profile from the overlay's dropdown (shown when you have more than
+   one) and use the **◀ / ▶** buttons to move between phases. The header shows
    `Phase 2/5 — <name>`. Click **⚙** on the overlay to reopen settings.
 
 ### Note on arrow keys
@@ -105,9 +118,9 @@ corner away from where you click during combat.
 
 The web UI runs in a normal browser with mock data — handy for working on layout/parsing:
 
-- Open `webpage/overlay.html?mock=1` — renders two sample phases; ◀/▶ and arrow keys work,
-  and icons load from the live Discord CDN.
-- Open `webpage/config.html?mock=1` — loads one sample phase with a live preview.
+- Open `webpage/overlay.html?mock=1` — renders two sample profiles; the profile dropdown,
+  ◀/▶, and arrow keys work, and icons load from the live Discord CDN.
+- Open `webpage/config.html?mock=1` — loads two sample profiles with a live preview.
 
 (The `https://bolt-api/` POSTs fail harmlessly outside Bolt, and `Save` is a no-op there.)
 

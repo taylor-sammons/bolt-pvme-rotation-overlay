@@ -36,6 +36,34 @@ h2 {
   justify-content: space-between;
 }
 
+.profile-actions {
+  display: flex;
+  gap: 8px;
+}
+.profile-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.profile-row select {
+  min-width: 220px;
+  background: #1f2129;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 5px;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+.profile-row input[type="text"] {
+  flex: 1;
+  background: #1f2129;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 5px;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+
 .btn {
   background: rgba(255, 255, 255, 0.1);
   color: #f2f2f2;

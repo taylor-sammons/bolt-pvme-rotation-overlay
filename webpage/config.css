@@ -169,6 +169,14 @@ h2 {
   padding: 5px 8px;
   font-size: 13px;
 }
+.grid input[type="color"] {
+  background: #1f2129;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 5px;
+  height: 30px;
+  padding: 2px;
+  cursor: pointer;
+}
 .hint {
   color: #8a93a0;
   font-size: 12px;

@@ -54,6 +54,13 @@
         <label class="check"><input type="checkbox" id="ov-visible" /> Show overlay</label>
         <label class="check"><input type="checkbox" id="ov-locked" /> Lock position</label>
       </div>
+      <h2>Overlay appearance</h2>
+      <div class="grid">
+        <label>Background opacity (%) <input type="number" id="ov-opacity" min="0" max="100" /></label>
+        <label>Font size <input type="number" id="ov-fontsize" min="10" max="28" /></label>
+        <label>Text color <input type="color" id="ov-textcolor" /></label>
+        <label>Title color <input type="color" id="ov-titlecolor" /></label>
+      </div>
       <p class="hint">
         Position/size are in pixels from the top-left of the game window. Changing them
         recreates the overlay when you save.

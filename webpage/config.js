@@ -27,6 +27,10 @@
     icon: document.getElementById("ov-icon"),
     visible: document.getElementById("ov-visible"),
     locked: document.getElementById("ov-locked"),
+    opacity: document.getElementById("ov-opacity"),
+    fontSize: document.getElementById("ov-fontsize"),
+    textColor: document.getElementById("ov-textcolor"),
+    titleColor: document.getElementById("ov-titlecolor"),
   };
 
   // --- Bridge ---
@@ -74,6 +78,10 @@
     fields.icon.value = state.overlay.iconSize ?? 20;
     fields.visible.checked = state.overlay.visible !== false;
     fields.locked.checked = !!state.overlay.locked;
+    fields.opacity.value = state.overlay.opacity ?? 72;
+    fields.fontSize.value = state.overlay.fontSize ?? 13;
+    fields.textColor.value = state.overlay.textColor || "#e8e8e8";
+    fields.titleColor.value = state.overlay.titleColor || "#ffd57a";
     renderProfileBar();
     renderPhases();
   }
@@ -279,6 +287,10 @@
       iconSize: Math.max(12, Math.min(128, num(fields.icon, 20))),
       visible: fields.visible.checked,
       locked: fields.locked.checked,
+      opacity: Math.max(0, Math.min(100, num(fields.opacity, 72))),
+      fontSize: Math.max(10, Math.min(28, num(fields.fontSize, 13))),
+      textColor: fields.textColor.value || "#e8e8e8",
+      titleColor: fields.titleColor.value || "#ffd57a",
     };
     state.currentProfile = clampIndex(state.currentProfile, state.profiles.length);
     state.profiles.forEach(function (p) {

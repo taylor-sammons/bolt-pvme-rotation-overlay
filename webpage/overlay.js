@@ -51,7 +51,22 @@
     config.currentProfile = clampIndex(config.currentProfile, config.profiles.length);
     // When locked, the title cursor and resize grip are hidden via CSS.
     document.body.classList.toggle("locked", !!config.overlay.locked);
+    applyAppearance(config.overlay);
     render();
+  }
+
+  // Style-only settings arrive as CSS variables; overlay.css carries the
+  // defaults as var() fallbacks.
+  function applyAppearance(o) {
+    const root = document.documentElement.style;
+    if (typeof o.opacity === "number") {
+      root.setProperty("--bg-opacity", String(Math.max(0, Math.min(100, o.opacity)) / 100));
+    }
+    if (typeof o.fontSize === "number") {
+      root.setProperty("--ov-font", o.fontSize + "px");
+    }
+    if (o.textColor) root.setProperty("--text-color", o.textColor);
+    if (o.titleColor) root.setProperty("--title-color", o.titleColor);
   }
 
   function clampIndex(i, n) {
@@ -204,7 +219,7 @@
   function maybeMock() {
     if (!/[?&]mock=1\b/.test(location.search)) return;
     applyConfig({
-      overlay: { iconSize: 20 },
+      overlay: { iconSize: 20, opacity: 50, fontSize: 15, textColor: "#9fd0ff", titleColor: "#ffd57a" },
       currentProfile: 0,
       profiles: [
         {

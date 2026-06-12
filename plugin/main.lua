@@ -29,7 +29,19 @@ local CONFIG_FILE = "rotation.json"
 
 local function default_config()
 	return {
-		overlay = { x = 40, y = 40, w = 640, h = 110, iconSize = 20, visible = true, locked = false },
+		overlay = {
+			x = 40,
+			y = 40,
+			w = 640,
+			h = 110,
+			iconSize = 20,
+			visible = true,
+			locked = false,
+			opacity = 72,
+			fontSize = 13,
+			textColor = "#e8e8e8",
+			titleColor = "#ffd57a",
+		},
 		currentProfile = 0,
 		profiles = {},
 	}

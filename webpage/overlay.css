@@ -17,7 +17,7 @@ body {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: rgba(12, 12, 16, 0.72);
+  background: rgba(12, 12, 16, var(--bg-opacity, 0.72));
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
   padding: 4px 8px 8px 8px;
@@ -28,7 +28,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--ov-font, 13px);
   line-height: 1.4;
 }
 
@@ -38,7 +38,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #ffd57a;
+  color: var(--title-color, #ffd57a);
   cursor: move;
 }
 
@@ -122,11 +122,11 @@ body {
 .pvme-note {
   font-style: italic;
   color: #b9c4d0;
-  font-size: 12px;
+  font-size: calc(var(--ov-font, 13px) - 1px);
 }
 .pvme-text {
-  color: #e8e8e8;
-  font-size: 13px;
+  color: var(--text-color, #e8e8e8);
+  font-size: var(--ov-font, 13px);
 }
 .pvme-fallback {
   background: rgba(255, 255, 255, 0.12);

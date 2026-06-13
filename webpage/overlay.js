@@ -65,6 +65,7 @@
     if (typeof o.fontSize === "number") {
       root.setProperty("--ov-font", o.fontSize + "px");
     }
+    if (o.fontFamily) root.setProperty("--ov-family", o.fontFamily);
     if (o.textColor) root.setProperty("--text-color", o.textColor);
     if (o.titleColor) root.setProperty("--title-color", o.titleColor);
   }
@@ -219,7 +220,7 @@
   function maybeMock() {
     if (!/[?&]mock=1\b/.test(location.search)) return;
     applyConfig({
-      overlay: { iconSize: 20, opacity: 50, fontSize: 15, textColor: "#9fd0ff", titleColor: "#ffd57a" },
+      overlay: { iconSize: 20, opacity: 50, fontSize: 15, fontFamily: "Cantarell, sans-serif", textColor: "#9fd0ff", titleColor: "#ffd57a" },
       currentProfile: 0,
       profiles: [
         {

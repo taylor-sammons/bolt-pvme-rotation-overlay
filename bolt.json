@@ -1,6 +1,6 @@
 {
   "name": "PvME Rotation Overlay",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Overlays PvME combat rotations on screen: switchable profiles, each split into phases you arrow through.",
   "main": "plugin/main.lua"
 }

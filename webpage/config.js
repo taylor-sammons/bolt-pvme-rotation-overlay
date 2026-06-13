@@ -29,6 +29,7 @@
     locked: document.getElementById("ov-locked"),
     opacity: document.getElementById("ov-opacity"),
     fontSize: document.getElementById("ov-fontsize"),
+    fontFamily: document.getElementById("ov-fontfamily"),
     textColor: document.getElementById("ov-textcolor"),
     titleColor: document.getElementById("ov-titlecolor"),
   };
@@ -80,6 +81,7 @@
     fields.locked.checked = !!state.overlay.locked;
     fields.opacity.value = state.overlay.opacity ?? 72;
     fields.fontSize.value = state.overlay.fontSize ?? 13;
+    setSelect(fields.fontFamily, state.overlay.fontFamily || "Fira Sans, sans-serif");
     fields.textColor.value = state.overlay.textColor || "#e8e8e8";
     fields.titleColor.value = state.overlay.titleColor || "#ffd57a";
     renderProfileBar();
@@ -89,6 +91,25 @@
   function clampIndex(i, n) {
     if (n === 0) return 0;
     return Math.max(0, Math.min(i | 0, n - 1));
+  }
+
+  // Select an <option> by value; if the saved value isn't one of the presets,
+  // add it so it round-trips instead of silently resetting to the first option.
+  function setSelect(sel, value) {
+    let found = false;
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === value) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = value;
+      sel.appendChild(opt);
+    }
+    sel.value = value;
   }
 
   function currentProfile() {
@@ -289,6 +310,7 @@
       locked: fields.locked.checked,
       opacity: Math.max(0, Math.min(100, num(fields.opacity, 72))),
       fontSize: Math.max(10, Math.min(28, num(fields.fontSize, 13))),
+      fontFamily: fields.fontFamily.value || "Fira Sans, sans-serif",
       textColor: fields.textColor.value || "#e8e8e8",
       titleColor: fields.titleColor.value || "#ffd57a",
     };

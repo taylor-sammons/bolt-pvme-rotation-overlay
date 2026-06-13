@@ -39,6 +39,7 @@ local function default_config()
 			locked = false,
 			opacity = 72,
 			fontSize = 13,
+			fontFamily = "Fira Sans, sans-serif",
 			textColor = "#e8e8e8",
 			titleColor = "#ffd57a",
 		},
